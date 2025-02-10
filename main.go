@@ -1,15 +1,27 @@
 package main
 
 import (
+	"bytes"
 	"log"
 	"net/http"
 	_ "net/http/pprof"
+	"time"
 )
 
+var globalStore [][]byte
+
 func main() {
-	log.Println("Starting server on :6060")
-	log.Println("pprof is available at http://localhost:6060/debug/pprof/")
-	if err := http.ListenAndServe(":6060", nil); err != nil {
-		log.Fatal(err)
+	go leakMemory()
+
+	log.Println("Server running on :6060")
+	http.ListenAndServe(":6060", nil)
+}
+
+func leakMemory() {
+	for {
+		data := bytes.Repeat([]byte("x"), 1_000_000)
+		globalStore = append(globalStore, data)
+
+		time.Sleep(500 * time.Millisecond)
 	}
 }
